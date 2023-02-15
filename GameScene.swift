@@ -1,6 +1,6 @@
 import SpriteKit
 
-class GameScene: SKScene {
+class GameScene: SKScene, SKPhysicsContactDelegate {
     var boundary: SKNode!
 
     var lightBall: SKSpriteNode!
@@ -11,6 +11,8 @@ class GameScene: SKScene {
     let boundaryCategory: UInt32  = 4 // 2^2
 
     override func didMove(to view: SKView) {
+        physicsWorld.contactDelegate = self
+
         backgroundColor = UIColor(red: 109/255, green: 83/255, blue: 143/255, alpha: 1)
         anchorPoint = CGPoint(x: 0.5, y: 0.5)
 
@@ -42,9 +44,10 @@ class GameScene: SKScene {
         lightBall.physicsBody = SKPhysicsBody(circleOfRadius: lightBall.size.width / 2)
         lightBall.physicsBody?.affectedByGravity = true
         lightBall.physicsBody?.isDynamic = true
-        lightBall.physicsBody?.restitution = 1
+        lightBall.physicsBody?.restitution = 0.75
         lightBall.physicsBody?.categoryBitMask = lightBallCategory
-        lightBall.physicsBody?.collisionBitMask = platformCategory | boundaryCategory
+        lightBall.physicsBody?.collisionBitMask = boundaryCategory
+        lightBall.physicsBody?.contactTestBitMask = platformCategory
 
         addChild(lightBall)
     }
@@ -103,5 +106,15 @@ class GameScene: SKScene {
         } else {
             lightBall.physicsBody?.applyForce(CGVector(dx: -500, dy: 0))
         }
+    }
+
+    func didBegin(_ contact: SKPhysicsContact) {
+        if contact.contactNormal.dy > 0 {
+            lightBallJump()
+        }
+    }
+
+    func lightBallJump() {
+        lightBall.physicsBody?.velocity.dy = 900
     }
 }
