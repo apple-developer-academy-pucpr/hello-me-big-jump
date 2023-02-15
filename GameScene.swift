@@ -1,7 +1,10 @@
 import SpriteKit
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
-    var boundary: SKNode!
+    var minSquare: SKShapeNode!
+    var maxSquare: SKShapeNode!
+
+    var boundary: SKNode?
 
     var lightBall: SKSpriteNode!
     var ground: SKSpriteNode!
@@ -18,12 +21,30 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         backgroundColor = UIColor(red: 109/255, green: 83/255, blue: 143/255, alpha: 1)
         anchorPoint = CGPoint(x: 0.5, y: 0.5)
 
+        configureCamera()
+        configureBoundaries()
+        configureMinAndMaxSquare()
+
         configureLightBall()
         configureGround()
         configurePlatforms()
+    }
 
-        configureCamera()
-        configureBoundaries()
+    override func didChangeSize(_ oldSize: CGSize) {
+        let one = CGSize(width: 1, height: 1)
+        if let boundary = self.boundary, size != one {
+            boundary.removeFromParent()
+            configureBoundaries(at: boundary.position)
+
+            if !minSquare.frame.contains(lightBall.position) {
+                lightBall.removeFromParent()
+                configureLightBall()
+
+                if let cameraPosition = camera?.position {
+                    lightBall.position = cameraPosition
+                }
+            }
+        }
     }
 
     func configureCamera() {
@@ -34,16 +55,29 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(camera)
     }
 
-    func configureBoundaries() {
-        boundary = SKNode()
-        boundary.physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
-        boundary.physicsBody?.categoryBitMask = boundaryCategory
-        boundary.physicsBody?.collisionBitMask = lightBallCategory
-        boundary.position = .zero
+    func configureBoundaries(at position: CGPoint = .zero) {
+        let newBoundary = SKNode()
+        newBoundary.physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
+        newBoundary.physicsBody?.categoryBitMask = boundaryCategory
+        newBoundary.physicsBody?.collisionBitMask = lightBallCategory
+        newBoundary.position = position
 
-        addChild(boundary)
+        addChild(newBoundary)
+        boundary = newBoundary
+    }
 
-        lightBall.physicsBody?.applyForce(CGVector(dx: 200, dy: 200))
+    func configureMinAndMaxSquare() {
+        let minSide = min(size.height, size.width)
+        let maxSide = max(size.height, size.width)
+
+        minSquare = SKShapeNode(rectOf: CGSize(width: minSide, height: minSide))
+        minSquare.strokeColor = .blue
+
+        maxSquare = SKShapeNode(rectOf: CGSize(width: maxSide, height: maxSide))
+        maxSquare.strokeColor = .red
+
+        addChild(minSquare)
+        addChild(maxSquare)
     }
 
     func configureLightBall() {
@@ -65,7 +99,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func configureGround() {
         ground = SKSpriteNode(imageNamed: "neverendingbar")
-        ground.position = CGPoint(x: frame.midX, y: frame.minY + ground.frame.height / 2)
+        ground.position = CGPoint(x: maxSquare.frame.midX, y: minSquare.frame.minY + ground.frame.height / 2)
         ground.zPosition = 1
 
         ground.physicsBody = SKPhysicsBody(rectangleOf: ground.size)
@@ -81,7 +115,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         var posY = ground.position.y + interval
 
-        while posY < frame.maxY {
+        while posY < maxSquare.frame.maxY {
             let posX = CGFloat.random(in: frame.minX...frame.maxX)
             addPlatform(at: CGPoint(x: posX, y: posY))
             posY += interval
@@ -109,7 +143,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let difference = lightBall.position.y - cameraPosition.y
 
             camera?.position.y += difference
-            boundary.position.y += difference
+            boundary?.position.y += difference
+            minSquare.position.y += difference
+            maxSquare.position.y += difference
             ground.position.y += difference
 
             updatePlatforms()
@@ -117,16 +153,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func updatePlatforms() {
-        guard let cameraPosition = camera?.position else { return }
-
-        let upperBoundary = cameraPosition.y + size.height / 2
+        let upperBoundary = maxSquare.frame.maxY
         if let lastPlatform = platforms.last, lastPlatform.position.y < upperBoundary {
             let newX = CGFloat.random(in: frame.minX...frame.maxX)
             let newY = lastPlatform.position.y + 100
             addPlatform(at: CGPoint(x: newX, y: newY))
         }
 
-        let lowerBoundary = cameraPosition.y - size.height / 2
+        let lowerBoundary = ground.position.y
         if let firstPlatform = platforms.first, firstPlatform.position.y < lowerBoundary {
             platforms.remove(at: 0)
             firstPlatform.removeFromParent()
@@ -146,7 +180,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func handleTouch(_ touch: UITouch) {
         let location = touch.location(in: self)
 
-        if location.x > 0 {
+        if location.x > lightBall.position.x {
             lightBall.physicsBody?.applyForce(CGVector(dx: 500, dy: 0))
         } else {
             lightBall.physicsBody?.applyForce(CGVector(dx: -500, dy: 0))
