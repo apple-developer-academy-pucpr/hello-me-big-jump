@@ -84,4 +84,24 @@ class GameScene: SKScene {
             posY += interval
         }
     }
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        handleTouch(touch)
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        handleTouch(touch)
+    }
+
+    func handleTouch(_ touch: UITouch) {
+        let location = touch.location(in: self)
+
+        if location.x > 0 {
+            lightBall.physicsBody?.applyForce(CGVector(dx: 500, dy: 0))
+        } else {
+            lightBall.physicsBody?.applyForce(CGVector(dx: -500, dy: 0))
+        }
+    }
 }
