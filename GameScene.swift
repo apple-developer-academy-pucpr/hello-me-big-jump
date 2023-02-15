@@ -15,6 +15,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var platforms = [SKSpriteNode]()
 
+    weak var manager: GameManagerDelegate?
+
     override func didMove(to view: SKView) {
         physicsWorld.contactDelegate = self
 
@@ -149,6 +151,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             ground.position.y += difference
 
             updatePlatforms()
+
+            manager?.newHighestPosition(lightBall.position, interval: 100)
         }
     }
 
