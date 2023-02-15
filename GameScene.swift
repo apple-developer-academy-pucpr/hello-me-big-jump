@@ -10,6 +10,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     let platformCategory: UInt32  = 2 // 2^1
     let boundaryCategory: UInt32  = 4 // 2^2
 
+    var platforms = [SKSpriteNode]()
+
     override func didMove(to view: SKView) {
         physicsWorld.contactDelegate = self
 
@@ -20,7 +22,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         configureGround()
         configurePlatforms()
 
+        configureCamera()
         configureBoundaries()
+    }
+
+    func configureCamera() {
+        let camera = SKCameraNode()
+        camera.position = CGPoint(x: frame.midX, y: frame.midY)
+        self.camera = camera
+
+        addChild(camera)
     }
 
     func configureBoundaries() {
@@ -72,19 +83,53 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         while posY < frame.maxY {
             let posX = CGFloat.random(in: frame.minX...frame.maxX)
-
-            let platform = SKSpriteNode(imageNamed: "simplebar")
-            platform.position = CGPoint(x: posX, y: posY)
-            platform.zPosition = 1
-
-            platform.physicsBody = SKPhysicsBody(rectangleOf: platform.size)
-            platform.physicsBody?.affectedByGravity = false
-            platform.physicsBody?.isDynamic = false
-            platform.physicsBody?.categoryBitMask = platformCategory
-
-            addChild(platform)
-
+            addPlatform(at: CGPoint(x: posX, y: posY))
             posY += interval
+        }
+    }
+
+    func addPlatform(at position: CGPoint) {
+        let platform = SKSpriteNode(imageNamed: "simplebar")
+        platform.position = position
+        platform.zPosition = 1
+
+        platform.physicsBody = SKPhysicsBody(rectangleOf: platform.size)
+        platform.physicsBody?.affectedByGravity = false
+        platform.physicsBody?.isDynamic = false
+        platform.physicsBody?.categoryBitMask = platformCategory
+
+        addChild(platform)
+        platforms.append(platform)
+    }
+
+    override func update(_ currentTime: TimeInterval) {
+        guard let cameraPosition = self.camera?.position else { return }
+
+        if lightBall.position.y > cameraPosition.y {
+            let difference = lightBall.position.y - cameraPosition.y
+
+            camera?.position.y += difference
+            boundary.position.y += difference
+            ground.position.y += difference
+
+            updatePlatforms()
+        }
+    }
+
+    func updatePlatforms() {
+        guard let cameraPosition = camera?.position else { return }
+
+        let upperBoundary = cameraPosition.y + size.height / 2
+        if let lastPlatform = platforms.last, lastPlatform.position.y < upperBoundary {
+            let newX = CGFloat.random(in: frame.minX...frame.maxX)
+            let newY = lastPlatform.position.y + 100
+            addPlatform(at: CGPoint(x: newX, y: newY))
+        }
+
+        let lowerBoundary = cameraPosition.y - size.height / 2
+        if let firstPlatform = platforms.first, firstPlatform.position.y < lowerBoundary {
+            platforms.remove(at: 0)
+            firstPlatform.removeFromParent()
         }
     }
 
