@@ -13,7 +13,7 @@ struct ContentView: View {
                 Text("Paused")
                     .font(.system(.largeTitle, design: .rounded))
                     .fontWeight(.black)
-                    .foregroundColor(.black)
+                    .foregroundColor(Color(uiColor: gameManager.darkPurple))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(.white.opacity(0.3))
             }
@@ -33,22 +33,21 @@ struct ContentView: View {
             Spacer()
 
             Text("Score: \(gameManager.score)")
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
                 .foregroundColor(.white)
                 .padding()
-                .background(.black)
                 .cornerRadius(16)
-                .padding()
         }
+        .padding()
     }
 
     @ViewBuilder func createButton(imageName: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: imageName)
-                .foregroundColor(.white)
+                .foregroundColor(Color(uiColor: gameManager.darkPurple))
                 .padding()
-                .background(.black)
+                .background(.white)
                 .cornerRadius(16)
-                .padding()
         }
     }
 }

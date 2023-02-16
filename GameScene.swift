@@ -9,18 +9,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var lightBall: SKSpriteNode!
     var ground: SKSpriteNode!
 
-    let lightBallCategory: UInt32 = 1 // 2^0
-    let platformCategory: UInt32  = 2 // 2^1
-    let boundaryCategory: UInt32  = 4 // 2^2
-
     var platforms = [SKSpriteNode]()
 
     weak var manager: GameManagerDelegate?
 
+    enum PhysicsCategories {
+        static let lightBallCategory: UInt32 = 0x1 << 0 // 2^0
+        static let platformCategory: UInt32  = 0x1 << 1 // 2^1
+        static let boundaryCategory: UInt32  = 0x1 << 2 // 2^2
+    }
+
+    enum ZPositions {
+        static let background: CGFloat = -1
+        static let platform: CGFloat = 1
+        static let lightBall: CGFloat = 2
+    }
+
     override func didMove(to view: SKView) {
         physicsWorld.contactDelegate = self
-
-        backgroundColor = UIColor(red: 109/255, green: 83/255, blue: 143/255, alpha: 1)
         anchorPoint = CGPoint(x: 0.5, y: 0.5)
 
         configureCamera()
@@ -60,8 +66,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func configureBoundaries(at position: CGPoint = .zero) {
         let newBoundary = SKNode()
         newBoundary.physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
-        newBoundary.physicsBody?.categoryBitMask = boundaryCategory
-        newBoundary.physicsBody?.collisionBitMask = lightBallCategory
+        newBoundary.physicsBody?.categoryBitMask = PhysicsCategories.boundaryCategory
+        newBoundary.physicsBody?.collisionBitMask = PhysicsCategories.lightBallCategory
         newBoundary.position = position
 
         addChild(newBoundary)
@@ -73,10 +79,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let maxSide = max(size.height, size.width)
 
         minSquare = SKShapeNode(rectOf: CGSize(width: minSide, height: minSide))
-        minSquare.strokeColor = .blue
+        minSquare.strokeColor = .clear
 
         maxSquare = SKShapeNode(rectOf: CGSize(width: maxSide, height: maxSide))
-        maxSquare.strokeColor = .red
+        maxSquare.strokeColor = .clear
 
         addChild(minSquare)
         addChild(maxSquare)
@@ -86,15 +92,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         lightBall = SKSpriteNode(imageNamed: "lightball")
         lightBall.name = "lightball"
         lightBall.position = CGPoint(x: frame.midX - lightBall.frame.midX, y: frame.midY - lightBall.frame.midX)
-        lightBall.zPosition = 2
+        lightBall.zPosition = ZPositions.lightBall
 
         lightBall.physicsBody = SKPhysicsBody(circleOfRadius: lightBall.size.width / 2)
         lightBall.physicsBody?.affectedByGravity = true
         lightBall.physicsBody?.isDynamic = true
         lightBall.physicsBody?.restitution = 0.75
-        lightBall.physicsBody?.categoryBitMask = lightBallCategory
-        lightBall.physicsBody?.collisionBitMask = boundaryCategory
-        lightBall.physicsBody?.contactTestBitMask = platformCategory
+        lightBall.physicsBody?.categoryBitMask = PhysicsCategories.lightBallCategory
+        lightBall.physicsBody?.collisionBitMask = PhysicsCategories.boundaryCategory
+        lightBall.physicsBody?.contactTestBitMask = PhysicsCategories.platformCategory
 
         addChild(lightBall)
     }
@@ -102,12 +108,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func configureGround() {
         ground = SKSpriteNode(imageNamed: "neverendingbar")
         ground.position = CGPoint(x: maxSquare.frame.midX, y: minSquare.frame.minY + ground.frame.height / 2)
-        ground.zPosition = 1
+        ground.zPosition = ZPositions.platform
 
         ground.physicsBody = SKPhysicsBody(rectangleOf: ground.size)
         ground.physicsBody?.affectedByGravity = false
         ground.physicsBody?.isDynamic = false
-        ground.physicsBody?.categoryBitMask = platformCategory
+        ground.physicsBody?.categoryBitMask = PhysicsCategories.platformCategory
 
         addChild(ground)
     }
@@ -127,12 +133,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func addPlatform(at position: CGPoint) {
         let platform = SKSpriteNode(imageNamed: "simplebar")
         platform.position = position
-        platform.zPosition = 1
+        platform.zPosition = ZPositions.platform
 
         platform.physicsBody = SKPhysicsBody(rectangleOf: platform.size)
         platform.physicsBody?.affectedByGravity = false
         platform.physicsBody?.isDynamic = false
-        platform.physicsBody?.categoryBitMask = platformCategory
+        platform.physicsBody?.categoryBitMask = PhysicsCategories.platformCategory
 
         addChild(platform)
         platforms.append(platform)
