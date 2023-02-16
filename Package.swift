@@ -8,15 +8,15 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "JourneyJump",
+    name: "BigJump",
     platforms: [
         .iOS("15.2")
     ],
     products: [
         .iOSApplication(
-            name: "JourneyJump",
+            name: "BigJump",
             targets: ["AppModule"],
-            bundleIdentifier: "com.djeniferrenata.JourneyJump",
+            bundleIdentifier: "com.djeniferrenata.BigJump",
             teamIdentifier: "Y7XR3D999P",
             displayVersion: "1.0",
             bundleVersion: "1",
